@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+results/models/*.keras
+results/models/*.h5
+results/plots/*.png
+results/*.csv
+results/*.md
+.DS_Store
