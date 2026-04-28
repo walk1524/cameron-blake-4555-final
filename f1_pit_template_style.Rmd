@@ -1,0 +1,129 @@
+---
+title: "F1 Pit Strategy"
+author: "Blake Thompson"
+date: "4/27/2026"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## F1 example
+
+This example uses a Formula 1 dataset to predict whether a driver will pit on the next lap.
+
+```{r}
+library(keras3)
+library(tfdatasets)
+library(tensorflow)
+```
+
+## dataframes
+
+This chunk loads the dataset and shows the basic structure of the data.
+
+```{r}
+# Loading a csv file
+f1df <- read.csv("data/f1_strategy_dataset_v4.csv")
+
+# Using a smaller part of the data keeps the example easier to run while still training and testing the model.
+f1df <- f1df[1:10000,]
+
+# Various syntax for R dataframes
+summary(f1df)
+
+head(f1df)
+
+# You can refer to columns by name or by number:
+head(f1df[,1])
+
+head(f1df$LapNumber)
+
+head(f1df["LapNumber"])
+```
+
+```{r}
+# You can refer to rows by numbers, note difference from columns:
+f1df[5,]
+
+# Ranges of columns:
+head(f1df[,1:3])
+
+# Ranges of rows:
+f1df[1:3,]
+```
+
+## Data preprocessing
+
+This chunk keeps simple numeric columns and keeps PitNextLap as the category the model is trying to predict.
+
+```{r}
+# Keeping only numeric columns for this simple version.
+f1df <- f1df[,c(2,4,5,6,7,9,10,11,14,15,16,13)]
+
+# plotting PitNextLap vs LapNumber
+plot(f1df$LapNumber, f1df$PitNextLap, xlab = "Lap number", ylab = "Pit next lap")
+
+head(f1df)
+```
+
+## Splitting data into training and testing
+
+This chunk randomly separates the rows into training data and testing data.
+
+```{r}
+sample_size <- 8000
+set.seed(1234)
+
+picked <- sample(seq_len(nrow(f1df)),size = sample_size)
+training <- f1df[picked,]
+testing <- f1df[-picked,]
+
+# Changing y into categorical data.
+yTr <- to_categorical(training$PitNextLap)
+yTest <- to_categorical(testing$PitNextLap)
+
+yTest
+```
+
+## Neural network for the F1 example
+
+This chunk creates one simple neural network that takes the numeric F1 columns as input and predicts the PitNextLap category.
+
+```{r}
+model = keras_model_sequential() %>%
+  layer_dense(units = 64, activation = "relu", input_shape = c(11)) %>%
+  layer_dense(units = ncol(yTr), activation = "softmax")
+
+model %>% compile(
+  loss = "categorical_crossentropy",
+  optimizer = "adam", 
+  metrics = "accuracy"
+)
+
+xTr <- as.matrix(training[,1:11])
+xTest <- as.matrix(testing[,1:11])
+
+model %>% 
+  fit(
+    x = xTr,
+    y = yTr,
+    epochs = 5
+  )
+```
+
+# Evaluate the model
+
+This chunk tests the model on data it did not train on and then shows the predicted probabilities.
+
+```{r}
+model %>% evaluate(xTest, yTest)
+
+# Predicting likelihood of all categories:
+result <- model %>% predict(xTest)
+
+result
+
+testing[,12]
+```
