@@ -126,4 +126,5 @@ result <- model %>% predict(xTest)
 result
 
 testing[,12]
+table(testing[,12])
 ```
