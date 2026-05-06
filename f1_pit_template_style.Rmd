@@ -132,12 +132,14 @@ model %>%
 
 ## Neural network approach 2
 
-This second model uses two hidden layers so it can try to learn more complex relationships between lap information, tire condition, race position, and tire compound.
+This second model uses two hidden layers and dropout regularization so it can try to learn more complex relationships without relying too heavily on any one group of nodes.
 
 ```{r}
 model2 = keras_model_sequential() %>%
   layer_dense(units = 128, activation = "relu", input_shape = c(ncol(training) - 1)) %>%
+  layer_dropout(rate = 0.2) %>%
   layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(rate = 0.2) %>%
   layer_dense(units = ncol(yTr), activation = "softmax")
 
 model2 %>% compile(
