@@ -105,6 +105,13 @@ model %>% compile(
 xTr <- as.matrix(training[,1:11])
 xTest <- as.matrix(testing[,1:11])
 
+feature_means <- colMeans(xTr)
+feature_sds <- apply(xTr, 2, sd)
+feature_sds[feature_sds == 0] <- 1
+
+xTr <- scale(xTr, center = feature_means, scale = feature_sds)
+xTest <- scale(xTest, center = feature_means, scale = feature_sds)
+
 model %>% 
   fit(
     x = xTr,
