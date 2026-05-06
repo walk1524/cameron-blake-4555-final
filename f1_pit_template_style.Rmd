@@ -1,6 +1,6 @@
 ---
 title: "F1 Pit Strategy"
-author: "Blake Thompson"
+author: "Blake Thompson and Cameron Walker"
 date: "4/27/2026"
 output:
   html_document:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 This project uses Formula 1 lap and tire data to predict whether a driver will pit on the next lap. The label is `PitNextLap`, where `0` means the driver did not pit on the next lap and `1` means the driver did pit on the next lap.
 
-My hypothesis is that lap number, tire age, race progress, lap time change, position, degradation, and tire compound should help predict pit strategy because pit stops are strongly connected to tire wear and race timing.
+Our hypothesis is that lap number, tire age, race progress, lap time change, position, degradation, and tire compound should help predict pit strategy because pit stops are strongly connected to tire wear and race timing.
 
 ```{r packages}
 library(keras3)
@@ -26,7 +26,7 @@ library(tensorflow)
 
 ## Data
 
-The data are loaded from the local CSV file `data/f1_strategy_dataset_v4.csv`. I use the first 10,000 rows so the neural networks train quickly while still having enough examples to learn from.
+The data are loaded from the local CSV file `data/f1_strategy_dataset_v4.csv`. We use the first 10,000 rows so the neural networks train quickly while still having enough examples to learn from.
 
 The dataset was obtained from **[F1 Strategy Dataset | Pit Stop Prediction](https://www.kaggle.com/datasets/aadigupta1601/f1-strategy-dataset-pit-stop-prediction)**. The downloaded CSV file was saved locally as `data/f1_strategy_dataset_v4.csv`.
 
@@ -44,7 +44,7 @@ head(f1df, 3)
 
 ## Design Matrix and Preprocessing
 
-The design matrix keeps numeric race and tire features and adds one-hot encoded tire compound columns. I kept these features because they describe where the car is in the race, how old the tires are, how the lap time is changing, and what tire type the car is using. The response variable, `PitNextLap`, is kept as the label.
+The design matrix keeps numeric race and tire features and adds one-hot encoded tire compound columns. We kept these features because they describe where the car is in the race, how old the tires are, how the lap time is changing, and what tire type the car is using. The response variable, `PitNextLap`, is kept as the label.
 
 The numeric features are scaled before training so that columns measured on different ranges do not dominate the neural network. For example, `Year`, `LapTime`, and `RaceProgress` have very different numeric scales. Scaling puts them on a comparable scale and helps the optimizer learn more smoothly. The `Compound` column is categorical, so it is one-hot encoded into separate numeric columns such as `Compound_SOFT`, `Compound_MEDIUM`, and `Compound_HARD`. The label, `PitNextLap`, is converted to categorical format with `to_categorical()` because the neural network uses a softmax output layer.
 
@@ -155,11 +155,11 @@ history2 <- model2 %>%
 
 ## Process
 
-I first built Model 1 as a baseline neural network with one hidden layer. This gave me a simple model to test whether the selected lap, tire, position, and compound features could predict `PitNextLap`.
+We first built Model 1 as a baseline neural network with one hidden layer. This gave us a simple model to test whether the selected lap, tire, position, and compound features could predict `PitNextLap`.
 
-After that, I built Model 2 with two hidden layers to test whether a deeper neural network could learn more complex relationships in the data. I also added dropout regularization to Model 2 to reduce overfitting. This allowed me to compare a simpler network against a deeper regularized network.
+After that, we built Model 2 with two hidden layers to test whether a deeper neural network could learn more complex relationships in the data. We also added dropout regularization to Model 2 to reduce overfitting. This allowed us to compare a simpler network against a deeper regularized network.
 
-The main changes I tried were scaling the numeric features, one-hot encoding tire compound, increasing the number of training epochs, adding validation during training, and adding a deeper network with dropout.
+The main changes we tried were scaling the numeric features, one-hot encoding tire compound, increasing the number of training epochs, adding validation during training, and adding a deeper network with dropout.
 
 ## Evaluation
 
@@ -219,7 +219,7 @@ The confusion matrices show how well the models predicted each class. This is im
 
 The results suggest that lap, tire, position, timing, and compound information can be useful for predicting whether a driver will pit on the next lap. Both neural networks reached strong testing performance, which shows that the selected design matrix contained useful pit strategy signals.
 
-The comparison between the two models showed that adding a second hidden layer and dropout did not clearly improve performance over the simpler baseline model. In the results I observed, Model 1 had slightly stronger testing performance than Model 2. This suggests that the one-hidden-layer model was already complex enough for this version of the problem, while the deeper dropout model may have reduced performance slightly by making training more conservative.
+The comparison between the two models showed that adding a second hidden layer and dropout did not clearly improve performance over the simpler baseline model. In the results we observed, Model 1 had slightly stronger testing performance than Model 2. This suggests that the one-hidden-layer model was already complex enough for this version of the problem, while the deeper dropout model may have reduced performance slightly by making training more conservative.
 
 The confusion matrices were important because they showed that the models were not only predicting the more common non-pit class. Model 2, for example, correctly identified many pit-next-lap cases, but it also missed some of them. This suggests that pit laps are still the harder class to predict, which makes sense because pit stops are less common than normal racing laps.
 
@@ -231,4 +231,4 @@ One challenge in this project is class imbalance. Most laps are not pit laps, so
 
 Another challenge is that the model does not include every factor that affects real F1 pit strategy. Real pit decisions can depend on safety cars, weather, tire availability, team strategy, traffic, driver pace, and race-specific conditions. Some of these factors are not included in the current design matrix.
 
-A future improvement would be to train on more than the first 10,000 rows and compare whether the results generalize across more races and seasons. I could also try adding more categorical features, such as driver or race, using one-hot encoding. Another improvement would be tuning hyperparameters such as dropout rate, hidden-layer size, learning rate, or number of epochs.
+A future improvement would be to train on more than the first 10,000 rows and compare whether the results generalize across more races and seasons. We could also try adding more categorical features, such as driver or race, using one-hot encoding. Another improvement would be tuning hyperparameters such as dropout rate, hidden-layer size, learning rate, or number of epochs.
