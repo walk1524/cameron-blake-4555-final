@@ -130,12 +130,38 @@ model %>%
   )
 ```
 
-# Evaluate the model
+## Neural network approach 2
 
-This chunk tests the model on data it did not train on and then shows the predicted probabilities.
+This second model uses two hidden layers so it can try to learn more complex relationships between lap information, tire condition, race position, and tire compound.
+
+```{r}
+model2 = keras_model_sequential() %>%
+  layer_dense(units = 128, activation = "relu", input_shape = c(ncol(training) - 1)) %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = ncol(yTr), activation = "softmax")
+
+model2 %>% compile(
+  loss = "categorical_crossentropy",
+  optimizer = "adam",
+  metrics = "accuracy"
+)
+
+model2 %>%
+  fit(
+    x = xTr,
+    y = yTr,
+    epochs = 30,
+    validation_split = 0.2
+  )
+```
+
+# Evaluate the models
+
+This chunk tests the models on data they did not train on and then shows the predicted probabilities from the first model.
 
 ```{r}
 model %>% evaluate(xTest, yTest)
+model2 %>% evaluate(xTest, yTest)
 
 # Predicting likelihood of all categories:
 result <- model %>% predict(xTest)
