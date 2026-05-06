@@ -116,7 +116,7 @@ model %>%
   fit(
     x = xTr,
     y = yTr,
-    epochs = 5
+    epochs = 30
   )
 ```
 
