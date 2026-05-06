@@ -224,3 +224,11 @@ The comparison between the two models showed that adding a second hidden layer a
 The confusion matrices were important because they showed that the models were not only predicting the more common non-pit class. Model 2, for example, correctly identified many pit-next-lap cases, but it also missed some of them. This suggests that pit laps are still the harder class to predict, which makes sense because pit stops are less common than normal racing laps.
 
 Overall, this project showed that preprocessing choices such as scaling numeric data and one-hot encoding tire compound helped make the data usable for neural network training. It also showed that a more complex network is not automatically better; the simpler model can be the better choice when it generalizes as well or better on the test set.
+
+## Challenges and Opportunities for Improvement
+
+One challenge in this project is class imbalance. Most laps are not pit laps, so the model can reach high accuracy by being very good at predicting `0`. Because of this, the confusion matrix is important for checking whether the model also predicts `1` cases.
+
+Another challenge is that the model does not include every factor that affects real F1 pit strategy. Real pit decisions can depend on safety cars, weather, tire availability, team strategy, traffic, driver pace, and race-specific conditions. Some of these factors are not included in the current design matrix.
+
+A future improvement would be to train on more than the first 10,000 rows and compare whether the results generalize across more races and seasons. I could also try adding more categorical features, such as driver or race, using one-hot encoding. Another improvement would be tuning hyperparameters such as dropout rate, hidden-layer size, learning rate, or number of epochs.
