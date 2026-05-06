@@ -1,9 +1,15 @@
+# Disclaimer: Used AI to generate this package installer
+
+
 # Run this once in the RStudio Console.
 # Posit Cloud/web RStudio may ask to restart after installing packages.
 
 packages <- c(
+  "rmarkdown",
+  "knitr",
   "keras3",
   "tensorflow",
+  "tfdatasets",
   "tidyverse",
   "caret",
   "pROC",
@@ -17,8 +23,8 @@ if (length(missing_packages) > 0) {
 
 library(keras3)
 library(tensorflow)
+library(tfdatasets)
 
-# Installs the Python environment used behind R Keras.
-# If your professor already has TensorFlow configured on the server,
-# this may say it is already installed.
-keras3::install_keras()
+cat("R packages are installed and loaded.\n")
+cat("If Keras gives a Python/TensorFlow error when knitting, run this once:\n")
+cat("keras3::install_keras()\n")
