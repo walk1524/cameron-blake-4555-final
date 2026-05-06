@@ -2,63 +2,49 @@
 title: "F1 Pit Strategy"
 author: "Blake Thompson"
 date: "4/27/2026"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-## F1 example
+## Project Goal
 
-This example uses a Formula 1 dataset to predict whether a driver will pit on the next lap.
+This project uses Formula 1 lap and tire data to predict whether a driver will pit on the next lap. The label is `PitNextLap`, where `0` means the driver did not pit on the next lap and `1` means the driver did pit on the next lap.
 
-```{r}
+My hypothesis is that lap number, tire age, race progress, lap time change, position, degradation, and tire compound should help predict pit strategy because pit stops are strongly connected to tire wear and race timing.
+
+```{r packages}
 library(keras3)
 library(tfdatasets)
 library(tensorflow)
 ```
 
-## dataframes
+## Data
 
-This chunk loads the dataset and shows the basic structure of the data.
+The data are loaded from the local CSV file `data/f1_strategy_dataset_v4.csv`. I use the first 10,000 rows so the neural networks train quickly while still having enough examples to learn from.
 
-```{r}
+```{r load-data}
 # Loading a csv file
 f1df <- read.csv("data/f1_strategy_dataset_v4.csv")
 
 # Using a smaller part of the data keeps the example easier to run while still training and testing the model.
 f1df <- f1df[1:10000,]
 
-# Various syntax for R dataframes
-summary(f1df)
-
-head(f1df)
-
-# You can refer to columns by name or by number:
-head(f1df[,1])
-
-head(f1df$LapNumber)
-
-head(f1df["LapNumber"])
+cat("Rows:", nrow(f1df), "\n")
+cat("Columns:", ncol(f1df), "\n")
+head(f1df, 3)
 ```
 
-```{r}
-# You can refer to rows by numbers, note difference from columns:
-f1df[5,]
+## Design Matrix and Preprocessing
 
-# Ranges of columns:
-head(f1df[,1:3])
+The design matrix keeps numeric race and tire features and adds one-hot encoded tire compound columns. I kept these features because they describe where the car is in the race, how old the tires are, how the lap time is changing, and what tire type the car is using. The response variable, `PitNextLap`, is kept as the label.
 
-# Ranges of rows:
-f1df[1:3,]
-```
-
-## Data preprocessing
-
-This chunk keeps simple numeric columns, one-hot encodes the tire compound, and keeps PitNextLap as the category the model is trying to predict.
-
-```{r}
+```{r preprocessing}
 # Keeping useful numeric columns and one-hot encoding the tire compound.
 f1df <- f1df[,c(2,3,4,5,6,7,9,10,11,14,15,16,13)]
 
@@ -74,14 +60,15 @@ f1df <- cbind(
 # plotting PitNextLap vs LapNumber
 plot(f1df$LapNumber, f1df$PitNextLap, xlab = "Lap number", ylab = "Pit next lap")
 
-head(f1df)
+head(f1df, 3)
+table(f1df$PitNextLap)
 ```
 
-## Splitting data into training and testing
+## Training and Testing Split
 
-This chunk randomly separates the rows into training data and testing data.
+The data are randomly split into 8,000 training rows and 2,000 testing rows. The validation data come from `validation_split = 0.2` inside model training, which means 20% of the training data are used to monitor validation performance during each epoch.
 
-```{r}
+```{r split-data}
 sample_size <- 8000
 set.seed(1234)
 
@@ -93,14 +80,17 @@ testing <- f1df[-picked,]
 yTr <- to_categorical(training$PitNextLap)
 yTest <- to_categorical(testing$PitNextLap)
 
-yTest
+cat("Training rows:", nrow(training), "\n")
+cat("Testing rows:", nrow(testing), "\n")
+table(training$PitNextLap)
+table(testing$PitNextLap)
 ```
 
-## Neural network for the F1 example
+## Model 1: One Hidden Layer
 
-This chunk creates one simple neural network that takes the F1 design matrix as input and predicts the PitNextLap category.
+The first neural network is a simple baseline model with one hidden layer of 64 nodes. This model is useful because it tests whether a smaller network can learn the main pattern before adding more complexity.
 
-```{r}
+```{r model-1}
 model = keras_model_sequential() %>%
   layer_dense(units = 64, activation = "relu", input_shape = c(ncol(training) - 1)) %>%
   layer_dense(units = ncol(yTr), activation = "softmax")
@@ -121,20 +111,21 @@ feature_sds[feature_sds == 0] <- 1
 xTr <- scale(xTr, center = feature_means, scale = feature_sds)
 xTest <- scale(xTest, center = feature_means, scale = feature_sds)
 
-model %>% 
+history1 <- model %>% 
   fit(
     x = xTr,
     y = yTr,
     epochs = 30,
-    validation_split = 0.2
+    validation_split = 0.2,
+    verbose = 0
   )
 ```
 
-## Neural network approach 2
+## Model 2: Deeper Network With Dropout
 
-This second model uses two hidden layers and dropout regularization so it can try to learn more complex relationships without relying too heavily on any one group of nodes.
+The second neural network uses two hidden layers and dropout regularization. This is a different approach because it gives the model more capacity, while dropout helps reduce overfitting by randomly turning off 20% of hidden-layer outputs during training.
 
-```{r}
+```{r model-2}
 model2 = keras_model_sequential() %>%
   layer_dense(units = 128, activation = "relu", input_shape = c(ncol(training) - 1)) %>%
   layer_dropout(rate = 0.2) %>%
@@ -148,32 +139,60 @@ model2 %>% compile(
   metrics = "accuracy"
 )
 
-model2 %>%
+history2 <- model2 %>%
   fit(
     x = xTr,
     y = yTr,
     epochs = 30,
-    validation_split = 0.2
+    validation_split = 0.2,
+    verbose = 0
   )
 ```
 
-# Evaluate the models
+## Evaluation
 
-This chunk tests the models on data they did not train on, then compares the predicted classes to the real PitNextLap values.
+The models are evaluated on both the training data and the testing data. Accuracy and loss summarize overall performance. The confusion matrices show whether the models are correctly predicting both classes, not just the more common non-pit class.
 
-```{r}
-model %>% evaluate(xTest, yTest)
-model2 %>% evaluate(xTest, yTest)
+```{r evaluation}
+model1_train_eval <- model %>% evaluate(xTr, yTr, verbose = 0)
+model1_test_eval <- model %>% evaluate(xTest, yTest, verbose = 0)
+model2_train_eval <- model2 %>% evaluate(xTr, yTr, verbose = 0)
+model2_test_eval <- model2 %>% evaluate(xTest, yTest, verbose = 0)
+
+evaluation_results <- data.frame(
+  Model = c(
+    "Model 1: one hidden layer",
+    "Model 1: one hidden layer",
+    "Model 2: dropout",
+    "Model 2: dropout"
+  ),
+  Data = c("Training", "Testing", "Training", "Testing"),
+  Accuracy = c(
+    as.numeric(model1_train_eval$accuracy),
+    as.numeric(model1_test_eval$accuracy),
+    as.numeric(model2_train_eval$accuracy),
+    as.numeric(model2_test_eval$accuracy)
+  ),
+  Loss = c(
+    as.numeric(model1_train_eval$loss),
+    as.numeric(model1_test_eval$loss),
+    as.numeric(model2_train_eval$loss),
+    as.numeric(model2_test_eval$loss)
+  )
+)
+
+evaluation_results
 
 # Predicting likelihood of all categories:
 result <- model %>% predict(xTest)
 result2 <- model2 %>% predict(xTest)
 
-result
-
 predicted_classes <- apply(result, 1, which.max) - 1
 predicted_classes2 <- apply(result2, 1, which.max) - 1
 
+cat("Model 1 confusion matrix:\n")
 table(Predicted = predicted_classes, Actual = testing$PitNextLap)
+
+cat("Model 2 confusion matrix:\n")
 table(Predicted = predicted_classes2, Actual = testing$PitNextLap)
 ```
