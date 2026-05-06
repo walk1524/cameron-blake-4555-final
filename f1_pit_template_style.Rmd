@@ -28,6 +28,8 @@ library(tensorflow)
 
 The data are loaded from the local CSV file `data/f1_strategy_dataset_v4.csv`. I use the first 10,000 rows so the neural networks train quickly while still having enough examples to learn from.
 
+The dataset was obtained from **[F1 Strategy Dataset | Pit Stop Prediction](https://www.kaggle.com/datasets/aadigupta1601/f1-strategy-dataset-pit-stop-prediction)**. The downloaded CSV file was saved locally as `data/f1_strategy_dataset_v4.csv`.
+
 ```{r load-data}
 # Loading a csv file
 f1df <- read.csv("data/f1_strategy_dataset_v4.csv")
