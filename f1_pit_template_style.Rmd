@@ -56,11 +56,20 @@ f1df[1:3,]
 
 ## Data preprocessing
 
-This chunk keeps simple numeric columns and keeps PitNextLap as the category the model is trying to predict.
+This chunk keeps simple numeric columns, one-hot encodes the tire compound, and keeps PitNextLap as the category the model is trying to predict.
 
 ```{r}
-# Keeping only numeric columns for this simple version.
-f1df <- f1df[,c(2,4,5,6,7,9,10,11,14,15,16,13)]
+# Keeping useful numeric columns and one-hot encoding the tire compound.
+f1df <- f1df[,c(2,3,4,5,6,7,9,10,11,14,15,16,13)]
+
+compound_matrix <- model.matrix(~ Compound - 1, data = f1df)
+colnames(compound_matrix) <- gsub("^Compound", "Compound_", colnames(compound_matrix))
+
+f1df <- cbind(
+  f1df[, c(1,3:12)],
+  compound_matrix,
+  PitNextLap = f1df$PitNextLap
+)
 
 # plotting PitNextLap vs LapNumber
 plot(f1df$LapNumber, f1df$PitNextLap, xlab = "Lap number", ylab = "Pit next lap")
@@ -89,11 +98,11 @@ yTest
 
 ## Neural network for the F1 example
 
-This chunk creates one simple neural network that takes the numeric F1 columns as input and predicts the PitNextLap category.
+This chunk creates one simple neural network that takes the F1 design matrix as input and predicts the PitNextLap category.
 
 ```{r}
 model = keras_model_sequential() %>%
-  layer_dense(units = 64, activation = "relu", input_shape = c(11)) %>%
+  layer_dense(units = 64, activation = "relu", input_shape = c(ncol(training) - 1)) %>%
   layer_dense(units = ncol(yTr), activation = "softmax")
 
 model %>% compile(
@@ -102,8 +111,8 @@ model %>% compile(
   metrics = "accuracy"
 )
 
-xTr <- as.matrix(training[,1:11])
-xTest <- as.matrix(testing[,1:11])
+xTr <- as.matrix(training[, names(training) != "PitNextLap"])
+xTest <- as.matrix(testing[, names(testing) != "PitNextLap"])
 
 feature_means <- colMeans(xTr)
 feature_sds <- apply(xTr, 2, sd)
@@ -133,6 +142,6 @@ result <- model %>% predict(xTest)
 
 result
 
-testing[,12]
-table(testing[,12])
+testing$PitNextLap
+table(testing$PitNextLap)
 ```
