@@ -116,7 +116,8 @@ model %>%
   fit(
     x = xTr,
     y = yTr,
-    epochs = 30
+    epochs = 30,
+    validation_split = 0.2
   )
 ```
 
