@@ -46,6 +46,8 @@ head(f1df, 3)
 
 The design matrix keeps numeric race and tire features and adds one-hot encoded tire compound columns. I kept these features because they describe where the car is in the race, how old the tires are, how the lap time is changing, and what tire type the car is using. The response variable, `PitNextLap`, is kept as the label.
 
+The numeric features are scaled before training so that columns measured on different ranges do not dominate the neural network. For example, `Year`, `LapTime`, and `RaceProgress` have very different numeric scales. Scaling puts them on a comparable scale and helps the optimizer learn more smoothly. The `Compound` column is categorical, so it is one-hot encoded into separate numeric columns such as `Compound_SOFT`, `Compound_MEDIUM`, and `Compound_HARD`. The label, `PitNextLap`, is converted to categorical format with `to_categorical()` because the neural network uses a softmax output layer.
+
 ```{r preprocessing}
 # Keeping useful numeric columns and one-hot encoding the tire compound.
 f1df <- f1df[,c(2,3,4,5,6,7,9,10,11,14,15,16,13)]
