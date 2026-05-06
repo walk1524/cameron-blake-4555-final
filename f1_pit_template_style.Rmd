@@ -159,7 +159,7 @@ model2 %>%
 
 # Evaluate the models
 
-This chunk tests the models on data they did not train on and then shows the predicted probabilities from the first model.
+This chunk tests the models on data they did not train on, then compares the predicted classes to the real PitNextLap values.
 
 ```{r}
 model %>% evaluate(xTest, yTest)
@@ -167,9 +167,13 @@ model2 %>% evaluate(xTest, yTest)
 
 # Predicting likelihood of all categories:
 result <- model %>% predict(xTest)
+result2 <- model2 %>% predict(xTest)
 
 result
 
-testing$PitNextLap
-table(testing$PitNextLap)
+predicted_classes <- apply(result, 1, which.max) - 1
+predicted_classes2 <- apply(result2, 1, which.max) - 1
+
+table(Predicted = predicted_classes, Actual = testing$PitNextLap)
+table(Predicted = predicted_classes2, Actual = testing$PitNextLap)
 ```
