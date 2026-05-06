@@ -153,6 +153,14 @@ history2 <- model2 %>%
   )
 ```
 
+## Process
+
+I first built Model 1 as a baseline neural network with one hidden layer. This gave me a simple model to test whether the selected lap, tire, position, and compound features could predict `PitNextLap`.
+
+After that, I built Model 2 with two hidden layers to test whether a deeper neural network could learn more complex relationships in the data. I also added dropout regularization to Model 2 to reduce overfitting. This allowed me to compare a simpler network against a deeper regularized network.
+
+The main changes I tried were scaling the numeric features, one-hot encoding tire compound, increasing the number of training epochs, adding validation during training, and adding a deeper network with dropout.
+
 ## Evaluation
 
 The models are evaluated on both the training data and the testing data. Accuracy and loss summarize overall performance. The confusion matrices show whether the models are correctly predicting both classes, not just the more common non-pit class.
