@@ -214,3 +214,13 @@ table(Predicted = predicted_classes2, Actual = testing$PitNextLap)
 Model 1 and Model 2 both performed well on the testing data. The accuracy and loss values above compare the simpler one-hidden-layer model with the deeper dropout model. If Model 1 has higher testing accuracy or lower testing loss, that suggests the simpler model was enough for this prediction task. If Model 2 performs better, that suggests the deeper architecture and dropout helped.
 
 The confusion matrices show how well the models predicted each class. This is important because most laps are usually non-pit laps, so a high accuracy score by itself could be misleading. A useful model should correctly identify many `1` cases, not just the more common `0` cases.
+
+## Conclusions
+
+The results suggest that lap, tire, position, timing, and compound information can be useful for predicting whether a driver will pit on the next lap. Both neural networks reached strong testing performance, which shows that the selected design matrix contained useful pit strategy signals.
+
+The comparison between the two models showed that adding a second hidden layer and dropout did not clearly improve performance over the simpler baseline model. In the results I observed, Model 1 had slightly stronger testing performance than Model 2. This suggests that the one-hidden-layer model was already complex enough for this version of the problem, while the deeper dropout model may have reduced performance slightly by making training more conservative.
+
+The confusion matrices were important because they showed that the models were not only predicting the more common non-pit class. Model 2, for example, correctly identified many pit-next-lap cases, but it also missed some of them. This suggests that pit laps are still the harder class to predict, which makes sense because pit stops are less common than normal racing laps.
+
+Overall, this project showed that preprocessing choices such as scaling numeric data and one-hot encoding tire compound helped make the data usable for neural network training. It also showed that a more complex network is not automatically better; the simpler model can be the better choice when it generalizes as well or better on the test set.
