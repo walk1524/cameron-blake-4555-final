@@ -1,103 +1,187 @@
-#How to run
+# How to Run
 
-Use this in console to download needed packages:
+Open the project in RStudio using:
 
-install.packages(c("keras3", "tensorflow", "tfdatasets", "rmarkdown", "knitr"))
+```text
+4555-Final-Project.Rproj
+```
 
-Run this just in case:
+Then run this in the RStudio Console to install and load the needed packages:
 
-library(keras3)
-install_keras()
+```r
+source("install_packages.R")
+```
 
+After that, open:
 
-Then click knit inside f1_pit_template_style.Rmd
+```text
+f1_pit_template_style.Rmd
+```
 
-# what data was used and what the model is trying to predict here
+Then click **Knit** in RStudio.
 
-The NN uses a Formula 1 data set
+You can also knit from the Console with:
 
-this files is in the data folder called f1_strategy_dataset_v4.csv
+```r
+rmarkdown::render("f1_pit_template_style.Rmd")
+```
 
-The model is trying to predict when the driver
-is going to take a PitNextLap
+If Keras gives a Python or TensorFlow error while knitting, run this once:
 
-0 mean the driver does not pit on the next lap.
-1 means the driver does pit on the next lap.
+```r
+keras3::install_keras()
+```
 
-#Features used and the encoding
+Then restart RStudio and knit again.
 
-We use numeric features for our current model.
+# What Data Was Used
 
-the input features are the following.
+The neural network uses a Formula 1 pit strategy dataset.
 
+The file is stored locally in the data folder:
+
+```text
+data/f1_strategy_dataset_v4.csv
+```
+
+The model is trying to predict:
+
+```text
+PitNextLap
+```
+
+The label means:
+
+```text
+0 = the driver does not pit on the next lap
+1 = the driver does pit on the next lap
+```
+
+# Features and Preprocessing
+
+The model uses numeric race and tire features, plus one-hot encoded tire compound features.
+
+The numeric features include:
+
+```text
 LapNumber
 Stint
 TyreLife
 Position
-LapTime.s
+LapTime
 Year
 LapTime_Delta
-Cumulative_degradation
+Cumulative_Degradation
 RaceProgress
-Normalize_TyreLife
+Normalized_TyreLife
 Position_Change
+```
 
-The ouput label is:
-PitNextLap
+The tire compound column is one-hot encoded into columns such as:
 
-The model uses the first 11 selected columns for input data.
+```text
+Compound_HARD
+Compound_MEDIUM
+Compound_SOFT
+Compound_WET
+```
 
-We conver PitNextLap with to_categorical()
+The model does not use `PitStop` as an input feature because that would leak information related to the answer.
 
-This means 0 becomes [1,0] and 1 becomes[0,1]
+The numeric input features are scaled before training so columns with larger numbers do not dominate the neural network.
 
-We do not use text columns yet. (Driver, Compound, Race)
+The output label `PitNextLap` is converted with:
 
-currently no one-hot encoding but this is something we will add later
+```r
+to_categorical()
+```
 
-#Arcitecture
+This changes the target values into a format that works with the softmax output layer.
 
-It has two dense layers.
+# Model Architectures
 
-Layer 1 is hidden.
+The project compares two neural network approaches.
 
-11 input values
-64 nodes.
-ReLU activation
+Model 1 is the simpler baseline model:
 
-Layer 2 is the output layer.
+```text
+Input layer based on the design matrix
+Hidden layer: 64 nodes, ReLU activation
+Output layer: softmax activation
+```
 
-2 output nodes
-softmax Activation
+Model 2 is the deeper regularized model:
 
-There is two output nodes since there is not classes
+```text
+Input layer based on the design matrix
+Hidden layer: 128 nodes, ReLU activation
+Dropout: 0.2
+Hidden layer: 64 nodes, ReLU activation
+Dropout: 0.2
+Output layer: softmax activation
+```
 
-0 = no pit next lap
-1 = pit next lap
+Model 2 uses dropout regularization to help reduce overfitting.
 
-#What is accomplished
-The project completes a basic neural network workflow.
+# Training and Evaluation
+
+The project uses:
+
+```text
+8,000 rows for training
+2,000 rows for testing
+20% validation split during training
+30 training epochs
+```
+
+The report evaluates the models using:
+
+```text
+accuracy
+loss
+confusion matrices
+```
+
+The confusion matrices are important because most laps are not pit laps, so accuracy alone can be misleading.
+
+# What Is Accomplished
+
+The project completes a neural network workflow.
 
 It:
+
+```text
 loads the Formula 1 dataset
-shows basic dataframe information
-selects numeric features
+selects useful features
+one-hot encodes tire compound
+scales numeric inputs
 splits the data into training and testing sets
 converts the target labels into categorical form
-builds a simple neural network
-trains the model
-evaluates the model on testing data
-prints prediction probabilities
+builds two neural network models
+adds dropout regularization to the second model
+trains both models
+evaluates both models on testing data
+compares results with accuracy, loss, and confusion matrices
+```
 
-This proves that the data can be loaded, run through a neural network, trained, and tested.
+# What Changed
 
-#What needs to be done
+The project started as a simple neural network using only numeric features and one model.
 
-The project can imporve by adding one-hot encoding catergorical features
+The updated version now includes:
 
-adding more than one nureal network architecture
+```text
+one-hot encoding for Compound
+numeric feature scaling
+more training epochs
+validation during training
+a second neural network architecture
+dropout regularization
+confusion matrices
+cleaner report sections
+results interpretation
+conclusions
+challenges and future improvements
+```
 
-adding regularization like dropout
-
-
-Right now, most laps are not pit laps, so accuracy can be misleading because the model can get a high score by mostly predicting no pit next lap.
+These changes help the project better match the assignment requirements and make the knitted report easier to read.
